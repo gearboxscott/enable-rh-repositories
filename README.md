@@ -9,12 +9,13 @@ Usage Information:
 ```
 $ ./enable-rh-repositories.sh 
 Usage:
-./enable-rh-repositories.sh [-l or --list] [-e or --enable] -f filename
+./enable-rh-repositories.sh [[-o or --org ] organization] [-l or --list] [-e or --enable] -f filename
  
 -l or --list    : create listing to modify for enabling Red Hat Repositories.
 -e or --enable  : enabling Red Hat Repositories.
 -f or --file    : filename to output to modified and filename to read in to enable repos.
 -h or --help    : help information.
+-o or --org     : organization. 
 ```
 
 This script will be call the first time to make a list of repositories to enable into a file.
@@ -23,7 +24,8 @@ This script will be call the first time to make a list of repositories to enable
 $ ./enable-rh-repositories.sh -l -f repolist.txt
 ```
 
-If you don't have `~/.hammer/cli_config.yml` and `~/.hammer/defaults.yml` setup then you will be prompted for a password and will get a error on a missing Organization.
+If you don't have `~/.hammer/cli_config.yml` you will be prompted for a password. 
+If you don't have `~/.hammer/defaults.yml` with a default organization then add `-o` or `--org` to your command.
 
 Once the script is run it will produce a file in the current directory.
 

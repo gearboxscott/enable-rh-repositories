@@ -13,12 +13,13 @@ function Usage() {
 
   # Print usage clause.
   echo "Usage:" 1>&2
-  echo "$0 [-l or --list] [-e or --enable] -f filename" 1>&2
+  echo "$0 [[-o or --org ] organization] [-l or --list] [-e or --enable] -f filename" 1>&2
   echo " " 1>&2
   echo "-l or --list    : create listing to modify for enabling Red Hat Repositories." 1>&2
   echo "-e or --enable  : enabling Red Hat Repositories." 1>&2
   echo "-f or --file    : filename to output to modified and filename to read in to enable repos." 1>&2
   echo "-h or --help    : help information." 1>&2
+  echo "-o or --org     : organization. " 1>&2
   echo " " 1>&2
   # Exit program.
   exit 1
@@ -26,15 +27,19 @@ function Usage() {
 
 function generate-rh-repo-list {
 
-   FILENAME=$1
-   hammer --output csv product list | grep -v ^ID | awk -F , '{ printf("%s\n", $2 ) }' | \
+   ORG=$1
+   FILENAME=$2
+   if [ "${ORG}" != "" ]; then
+      ORG="--organization ${ORG}"
+   fi
+   hammer --output csv product list ${ORG} | grep -v ^ID | awk -F , '{ printf("%s\n", $2 ) }' | \
    while read PNAME
    do
       IFS=','
-      hammer --output csv repository-set list --product "${PNAME}" | grep -v ^ID | \
+      hammer --output csv repository-set list ${ORG} --product "${PNAME}" | grep -v ^ID | \
       while read ID NULL RNAME
       do
-         hammer --output csv repository-set available-repositories --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
+         hammer --output csv repository-set available-repositories ${ORG} --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
          while read NAME ARCH RELEASE NULL ENABLED
          do
             echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME
@@ -46,15 +51,19 @@ function generate-rh-repo-list {
 
 function enable-rh-repo-list {
 
-   FILENAME=$1
+   ORG=$1
+   FILENAME=$2
+   if [ "${ORG}" != "" ]; then
+      ORG="--organization ${ORG}"
+   fi
    IFS=','
    cat ./${FILENAME} | grep -v ^n | \
    while read ENABLE REPONAME ARCH RELEASERVER REPOSITORYID NAME
    do
        if [ "{RELEASEVER}" != "" ]; then
-          OPTIONSLINE="--basearch ${ARCH} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
+          OPTIONSLINE="${ORG} --basearch ${ARCH} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
        else
-          OPTIONSLINE="--basearch ${ARCH} --releasever ${RELEASEVER} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
+          OPTIONSLINE="${ORG} --basearch ${ARCH} --releasever ${RELEASEVER} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
        fi
        echo Enabling : $REPONAME
        #echo hammer repository-set enable $OPTIONSLINE
@@ -103,6 +112,10 @@ while true; do
             FILENAME="${2}"
             shift 2
             ;;
+        -o | --org )
+            ORG="${2}"
+            shift 2
+            ;;
         -- )
             shift
             break
@@ -130,7 +143,7 @@ fi
 OFS=$IFS
 
 if [ $LIST -eq 1 ]; then
-   generate-rh-repo-list $FILENAME
+   generate-rh-repo-list "${ORG}" $FILENAME
    echo " "
    echo "Step 1: Modify ${FILENAME} to enable Red Hat Repositories in the list"
    echo "Step 2: Mark the ones to enable by changing 'n' to 'y' and save the file"
@@ -138,7 +151,7 @@ if [ $LIST -eq 1 ]; then
 fi
 
 if [ $ENABLEREPOS -eq 1 ]; then
-   enable-rh-repo-list $FILENAME
+   enable-rh-repo-list "${ORG}" $FILENAME
 fi
 
 IFS=$OFS
