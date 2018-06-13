@@ -42,7 +42,11 @@ function generate-rh-repo-list {
          hammer --output csv repository-set available-repositories ${ORG} --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
          while read NAME ARCH RELEASE NULL ENABLED
          do
-            echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME
+            if [ "${ENABLED}" == "false" ]; then
+               echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME
+            else
+               echo y,$NAME,$ARCH,$RELEASE,$ID,$RNAME
+            fi
          done
       done
    done > $FILENAME
