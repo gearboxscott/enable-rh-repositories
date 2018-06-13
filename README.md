@@ -36,7 +36,6 @@ n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,i386,6.7,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,x86_64,6.7,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,i386,6.8,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
-n
 ```
 
 To enable repository a repository, change the letter `n` to a `y` for the repositories that are to be enabled.
@@ -48,7 +47,6 @@ y,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,i386,6.7,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 y,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,x86_64,6.7,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
 n,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server,i386,6.8,1999,Red Hat Software Collections Source RPMs for Red Hat Enterprise Linux 6 Server
-n
 ```
 
 
