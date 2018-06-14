@@ -32,8 +32,8 @@ function generate-rh-repo-list {
    if [ "${ORG}" != "" ]; then
       ORG="--organization ${ORG}"
    fi
-   hammer --output csv product list ${ORG} | grep -v ^ID | awk -F , '{ printf("%s\n", $2 ) }' | \
-   while read PNAME
+   hammer --output csv product list ${ORG} | grep -v ^ID | \
+   while read PID PNAME
    do
       IFS=','
       hammer --output csv repository-set list ${ORG} --product "${PNAME}" | grep -v ^ID | \
@@ -43,9 +43,9 @@ function generate-rh-repo-list {
          while read NAME ARCH RELEASE NULL ENABLED
          do
             if [ "${ENABLED}" == "false" ]; then
-               echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME
+               echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME,$PID
             else
-               echo y,$NAME,$ARCH,$RELEASE,$ID,$RNAME
+               echo y,$NAME,$ARCH,$RELEASE,$ID,$RNAME,$PID
             fi
          done
       done
@@ -62,15 +62,15 @@ function enable-rh-repo-list {
    fi
    IFS=','
    cat ./${FILENAME} | grep -v ^n | \
-   while read ENABLE REPONAME ARCH RELEASERVER REPOSITORYID NAME
+   while read ENABLE REPONAME ARCH RELEASERVER REPOSITORYID NAME PID
    do
        if [ "{RELEASEVER}" != "" ]; then
-          OPTIONSLINE="${ORG} --basearch ${ARCH} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
+          OPTIONSLINE="${ORG} --basearch ${ARCH} --name \"${REPONAME}\" --product \"${NAME}\" "
        else
-          OPTIONSLINE="${ORG} --basearch ${ARCH} --releasever ${RELEASEVER} --name \"${REPONAME}\" --product-id ${REPOSITORYID}"
+          OPTIONSLINE="${ORG} --basearch ${ARCH} --releasever ${RELEASEVER} --name \"${REPONAME}\" --product \"${NAME}\""
        fi
        echo Enabling : $REPONAME
-       #echo hammer repository-set enable $OPTIONSLINE
+       hammer repository-set enable $OPTIONSLINE
    done
 
 }
