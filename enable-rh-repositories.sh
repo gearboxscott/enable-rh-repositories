@@ -13,7 +13,7 @@ function Usage() {
 
   # Print usage clause.
   echo "Usage:" 1>&2
-  echo "$0 [[-o or --org ] organization] [-l or --list] [-e or --enable] -f filename" 1>&2
+  echo "$0 -o or --org organization [-l or --list] [-e or --enable] -f filename" 1>&2
   echo " " 1>&2
   echo "-l or --list    : create listing to modify for enabling Red Hat Repositories." 1>&2
   echo "-e or --enable  : enabling Red Hat Repositories." 1>&2
@@ -32,20 +32,20 @@ function generate-rh-repo-list {
    if [ "${ORG}" != "" ]; then
       ORG="--organization ${ORG}"
    fi
+   IFS=','
    hammer --output csv product list ${ORG} | grep -v ^ID | \
-   while read PID PNAME
+   while read PID PNAME NULL NULL NULL NULL
    do
-      IFS=','
-      hammer --output csv repository-set list ${ORG} --product "${PNAME}" | grep -v ^ID | \
-      while read ID NULL RNAME
+      hammer --output csv repository-set list ${ORG} --product "${PNAME}" | grep -viE 'ID|Name'  | \
+      while read ID TYPE RNAME
       do
          hammer --output csv repository-set available-repositories ${ORG} --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
          while read NAME ARCH RELEASE NULL ENABLED
          do
             if [ "${ENABLED}" == "false" ]; then
-               echo n,$NAME,$ARCH,$RELEASE,$ID,$RNAME,$PID
+               echo n,$NAME,$ARCH,$RELEASE,$ID,$PNAME,$PID
             else
-               echo y,$NAME,$ARCH,$RELEASE,$ID,$RNAME,$PID
+               echo y,$NAME,$ARCH,$RELEASE,$ID,$PNAME,$PID
             fi
          done
       done
@@ -62,15 +62,17 @@ function enable-rh-repo-list {
    fi
    IFS=','
    cat ./${FILENAME} | grep -v ^n | \
-   while read ENABLE REPONAME ARCH RELEASERVER REPOSITORYID NAME PID
+   while read ENABLE REPONAME ARCH RELEASEVER REPOSITORYID NAME PID
    do
-       if [ "{RELEASEVER}" != "" ]; then
-          OPTIONSLINE="${ORG} --basearch ${ARCH} --name \"${REPONAME}\" --product \"${NAME}\" "
+       if [ "{RELEASEVER}" == "" ]; then
+          echo
+          echo KNOWN BUG : Unable enable ${REPONAME} 
+          echo             because of no release version, please use the Satellite Web GUI to enable it.
+          echo
        else
-          OPTIONSLINE="${ORG} --basearch ${ARCH} --releasever ${RELEASEVER} --name \"${REPONAME}\" --product \"${NAME}\""
+          echo Enabling : $REPONAME
+          hammer repository-set enable --organization "${ORG}" --basearch ${ARCH} --releasever "${RELEASEVER}" --id ${REPOSITORYID} --product-id ${PID}
        fi
-       echo Enabling : $REPONAME
-       hammer repository-set enable $OPTIONSLINE
    done
 
 }
@@ -135,11 +137,13 @@ done
 # are populated.
 
 if [ -z "${FILENAME}" ]; then
+    echo ERROR: -f filename or --file filename  missing!!!
     Usage
     exit 1
 fi
 
 if [ $ENABLEREPOS -eq 1 -a $LIST -eq 1 ]; then
+    echo ERROR: -l or --list or -e or --enable missing!!!
     Usage
     exit 1
 fi
