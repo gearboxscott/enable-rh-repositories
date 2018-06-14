@@ -64,15 +64,13 @@ function enable-rh-repo-list {
    cat ./${FILENAME} | grep -v ^n | \
    while read ENABLE REPONAME ARCH RELEASEVER REPOSITORYID NAME PID
    do
-       if [ "{RELEASEVER}" == "" ]; then
-          echo
-          echo KNOWN BUG : Unable enable ${REPONAME} 
-          echo             because of no release version, please use the Satellite Web GUI to enable it.
-          echo
-       else
           echo Enabling : $REPONAME
-          hammer repository-set enable --organization "${ORG}" --basearch ${ARCH} --releasever "${RELEASEVER}" --id ${REPOSITORYID} --product-id ${PID}
-       fi
+          hammer repository-set enable \
+          --organization "${ORG}" \
+          --basearch ${ARCH} \
+          --releasever "${RELEASEVER}" \
+          --id ${REPOSITORYID} \
+          --product-id ${PID}
    done
 
 }
