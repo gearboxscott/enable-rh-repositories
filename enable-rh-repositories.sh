@@ -19,7 +19,6 @@ function Usage() {
   echo "-e or --enable  : enabling Red Hat Repositories." 1>&2
   echo "-f or --file    : filename to output to modified and filename to read in to enable repos." 1>&2
   echo "-h or --help    : help information." 1>&2
-  echo "-o or --org     : organization. " 1>&2
   echo " " 1>&2
   # Exit program.
   exit 1
@@ -27,19 +26,15 @@ function Usage() {
 
 function generate-rh-repo-list {
 
-   ORG=$1
-   FILENAME=$2
-   if [ "${ORG}" != "" ]; then
-      ORG="--organization ${ORG}"
-   fi
+   FILENAME=$1
    IFS=','
-   hammer --output csv product list ${ORG} | grep -v ^ID | \
+   hammer --output csv product list | grep -v ^ID | \
    while read PID PNAME NULL NULL NULL NULL
    do
-      hammer --output csv repository-set list ${ORG} --product "${PNAME}" | grep -viE 'ID|Name'  | \
+      hammer --output csv repository-set list --product "${PNAME}" | grep -viE 'ID|Name'  | \
       while read ID TYPE RNAME
       do
-         hammer --output csv repository-set available-repositories ${ORG} --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
+         hammer --output csv repository-set available-repositories --id ${ID} --product "${PNAME}" | grep -viE 'ID|Name' | \
          while read NAME ARCH RELEASE NULL ENABLED
          do
             if [ "${ENABLED}" == "false" ]; then
@@ -55,18 +50,13 @@ function generate-rh-repo-list {
 
 function enable-rh-repo-list {
 
-   ORG=$1
    FILENAME=$2
-   if [ "${ORG}" != "" ]; then
-      ORG="--organization ${ORG}"
-   fi
    IFS=','
    cat ./${FILENAME} | grep -v ^n | \
    while read ENABLE REPONAME ARCH RELEASEVER REPOSITORYID NAME PID
    do
           echo Enabling : $REPONAME
           hammer repository-set enable \
-          --organization "${ORG}" \
           --basearch ${ARCH} \
           --releasever "${RELEASEVER}" \
           --id ${REPOSITORYID} \
@@ -116,10 +106,6 @@ while true; do
             FILENAME="${2}"
             shift 2
             ;;
-        -o | --org )
-            ORG="${2}"
-            shift 2
-            ;;
         -- )
             shift
             break
@@ -138,6 +124,12 @@ if [ -z "${FILENAME}" ]; then
     echo ERROR: -f filename or --file filename  missing!!!
     Usage
     exit 1
+fi
+
+if [ -f "~/.hammer/defaults.yml" ]; then
+   echo ERROR: setup ~/.hammer/defaults.yml with organization-id.
+   echo hammer defaults add --param-name organization --param-value org_name
+   echo set ~/.hammer/cli.modules.d/foreman.yml :username: and :password: for auto login
 fi
 
 if [ $ENABLEREPOS -eq 1 -a $LIST -eq 1 ]; then
